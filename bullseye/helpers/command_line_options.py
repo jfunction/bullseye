@@ -77,5 +77,6 @@ def build_command_line_options_parser():
   parser.add_argument('--precision',help='Force bullseye to use single / double precision when gridding', choices=['single','double'], default='single')
   parser.add_argument('--wplanes',help='Number of w-planes to use (1 disables w-projection)', type=int, default=1)
   parser.add_argument('--image_padding',help='Sets the FFT edge padding factor (the edge of the image should be ignored/cut)', type=float, default=1.20)
+  parser.add_argument('--cs_iterations',help='Sets the number of Cotton Schwab iterations', type=int, default=0)
   parser_args = vars(parser.parse_args())
   return (parser,parser_args)

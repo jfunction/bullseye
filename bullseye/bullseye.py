@@ -68,6 +68,8 @@ if __name__ == "__main__":
   Pick a backend to use
   '''
   libimaging = library_loader.load_library(parser_args['use_back_end'],parser_args['precision'])
+  if parser_args['cs_iterations'] > 0:
+    libdegridding = ctypes.pydll.LoadLibrary("%s_mo/cbuild/degridding/libdegrid.so" % (os.path.dirname(__file__),))
   from bullseye_mo import base_types
   base_types.force_precision(parser_args['precision'])
   from helpers import data_set_loader
@@ -416,10 +418,27 @@ if __name__ == "__main__":
   '''
   now finalize images
   '''
-  libimaging.finalize(ctypes.byref(params))
+  libimaging.finalize(ctypes.byref(params)) # takes the fft of gridded_vis
 
   if parser_args['output_psf']:
     libimaging.finalize_psf(ctypes.byref(params))
+
+  # Begin CLEAN code - make "model" image - for now use gridded_vis
+  if parser_args['cs_iterations'] > 0:
+    gridded_vis = np.array(gridded_vis,dtype=complex)
+    gridded_vis = np.fft.ifft(gridded_vis)  # probably must denormalize factor N^2
+    params.gridded_vis = np.fft.ifft(gridded_vis).ctypes.data_as(ctypes.c_void_p)
+    # Degridding code here
+    libdegridding.degrid(ctypes.byref(params))
+
+    # Save to disk - pyrap
+    # Write degridded_vis to disk
+    # from pyrap import tables as tables
+    # tmp_table = tables.table('tmp.MS')
+    # specify names/dims then
+    # tmp_table.putcol("CORRECTED_DATA", gridded_vis)
+    # table("tmp")
+    # write params.visibilities
 
   '''
   finally we can write to disk
